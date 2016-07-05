@@ -3,7 +3,7 @@
 Tiny little script for getting blocks dirs from HTML file with redefinition levels.
 
 ```js
-var params = { levels: ['common.blocks', 'project.blocks'], htmlSrc: 'index.html'
+var params = { levels: ['common.blocks', 'project.blocks'], htmlSrc: ['index.html', 'second.html']
 },
     getFileNames = require('html2bl').getFileNames(params);
 
