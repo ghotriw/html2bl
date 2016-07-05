@@ -11,19 +11,24 @@ var htmlparser = require("htmlparser2"),
  * @param {string} html
  * @returns {string[]} class names
  */
-function getClasses(html) {
-    var parser = new htmlparser.Parser({
-        onopentag: function(name, attribs){
-            if(attribs.class){
-                attribs.class.split(' ').forEach(function(className) {
-                    (classes.indexOf(className) === -1) && classes.push(className);
-                });
+function getClasses(htmlSrc) {
+    for(var index in htmlSrc) {
+        var html = fs.readFileSync(htmlSrc[index], 'utf8');
+        var parser = new htmlparser.Parser({
+            onopentag: function(name, attribs){
+                if(attribs.class){
+                    attribs.class.split(' ').forEach(function(className) {
+                        (classes.indexOf(className) === -1) && classes.push(className);
+                    });
+                }
             }
-        },
-    }, {decodeEntities: true});
-    parser.write(html);
-    parser.end();
+        }, {decodeEntities: true});
+        parser.write(html);
+        parser.end();
+    }
+
     return classes;
+
 }
 
 /**
@@ -33,7 +38,7 @@ function getClasses(html) {
  * @returns {string[]}
  */
 function getFilesFromBlocks(blocks, levels) {
-    var cssFiles = [],
+    var scssFiles = [],
         blockDirs = [];
 
     return vow.all(levels.map(function(level) {
@@ -42,16 +47,16 @@ function getFilesFromBlocks(blocks, levels) {
             return stat(dirName).then(function (stats) {
                 if (stats.isDirectory()) {
                     blockDirs.push(dirName);
-                    var fileName = path.resolve(dirName + '/' + blockName + '.css');
+                    var fileName = path.resolve(dirName + '/' + blockName + '.scss');
                 }
                 if (fs.statSync(fileName).isFile()) {
-                    cssFiles.push(fileName);
+                    scssFiles.push(fileName);
                 }
                 return stats;
             });
         }));
     })).then(function() {
-        return { css: cssFiles, dirs: blockDirs };
+        return { scss: scssFiles, dirs: blockDirs };
     });
 }
 
@@ -64,8 +69,7 @@ function getFilesFromBlocks(blocks, levels) {
  *
  */
 exports.getFileNames = function(params) {
-    var htmlSrc = fs.readFileSync(params.htmlSrc, 'utf8'),
-        blocks = getClasses(htmlSrc);
+    var blocks = getClasses(params.htmlSrc);
 
     return getFilesFromBlocks(blocks, params.levels).then(function(files) {
         return files;
